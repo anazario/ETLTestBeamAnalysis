@@ -1,6 +1,6 @@
 #include "../src/Unbinned.cc"
 
-void test_ub(){
+void HPK_3p1_8e14(){
   
   Unbinned ub;
   ub.tag = "HPK_3p1_8e14";
