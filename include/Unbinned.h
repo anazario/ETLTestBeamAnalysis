@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <functional>
 
 #include <TFile.h>
 #include <TTree.h>
@@ -34,12 +35,20 @@
 
 #include "testbeam.h"
 
+#define NUM_CHANNEL 2
+#define NUM_PADS 16
+#define GEOM 4
+
 using namespace RooFit;
 using namespace std;
 
 class Unbinned{
 
  public:
+
+  Unbinned(){};
+
+  virtual ~Unbinned(){};
 
   TChain *tch;
 
@@ -48,68 +57,93 @@ class Unbinned{
   TString outDir;
   TString inDir;
 
-  vector<int> *run_start;
-  vector<int> *run_end;
+  Bool_t isDebug = false;
 
-  static const int npad = 16;
-  static const int nlgads = 3;
-  static const int geom = 4;
+  vector<Float_t> xcuts;
+  vector<Float_t> ycuts;
+  vector<Float_t> frame_margins;
+
+  Float_t geom_cuts[NUM_PADS+1][GEOM];
+
+  Float_t satCut;
+  Int_t nbins = 100;
+  Float_t xl = 0.;
+  Float_t xh = -999.;
+  Float_t prec = 0.05;
+
+  void PrintGeomMap();
+  void SavePadInfo();
+  void SavePadNoise();
+  void SavePadSignal();
+
+ private:
 
   TString name;
 
+  Int_t pad_id;
+  Int_t vecsize = 0;
+
+  TFile* fIn;
+  TFile* fOut;
+
+  //Pad cuts
+  Float_t xmin = -999.;
+  Float_t xmax = -999.;
+  Float_t ymin = -999.;
+  Float_t ymax = -999.;
+
+  //new branches
+  Int_t ntracks;
+  Int_t npix;
+  Int_t nback;
+                                                                                                              
+  Float_t amp[NUM_CHANNEL];
+  Float_t x_dut;
+  Float_t y_dut;
+
+  //Pad histograms
   vector<TH1F*> pad_amp;
   vector<TH1F*> pad_noise;
   vector<TH2F*> pad2D;
   vector<TH2F*> pad2D_all;
 
-  vector<RooPlot*> noise_plot;
-  vector<RooPlot*> mip_plot;
-
-  vector<RooWorkspace*> ws;
+  //Roofit vectors
   vector<RooRealVar*> amp_rrvar;
   vector<RooArgSet*> amp_argset;
+  vector<RooDataSet*> noise_dataset;
   vector<RooDataSet*> mip_dataset;
   vector<RooRealVar*> ml,sl,mg,sg;
   vector<RooLandau*> landau;
   vector<RooGaussian*> gauss;
   vector<RooFFTConvPdf*> lxg;
   vector<RooAddPdf*> pdf_lxg;
-
-  vector<RooDataSet*> noise_dataset;
   vector<RooKeysPdf*> rkpdf;
   vector<RooRealVar*> Nn,Ns;
+  vector<RooPlot*> rplot;
+  vector<RooWorkspace*> ws;
+  vector<RooWorkspace*> wsIn;
 
-  vector<float> xcuts;
-  vector<float> ycuts;
-
-  float angle;
-  int pad_id;
-
-  Float_t amp[nlgads];
-  Int_t ntracks;
-  Int_t nback;
-  Int_t npix;
-  Float_t y_dut[3];
-  Float_t x_dut[3];
-  Float_t geom_cuts[npad+1][geom];
-
-
-  Int_t run;
-  Float_t satCut;
-  Float_t prec;
-  vector<int> *pads = new vector<int>();
-
-  void PrintGeomMap();
   void InitBranches();
   void PrepareTree();
   void PrepareCuts();
-  void SavePadNoise(Float_t xmin, Float_t xmax, int nbins);
-  void SavePadSignalFit(Float_t xmin, Float_t xmax, int nbins);
-  void Save2DPads(Float_t xl, Float_t xh, Float_t yl, Float_t yh);
+  void AssignCuts();
+  void PrepVectors();
+  void ClearVectors();
 
- private:
+  void AssignCuts(Int_t pad_id);
+  void PadInfoSelection(Int_t pad_id);
+  void NoiseSelection(Int_t pad_id);
+  void SignalSelection(Int_t pad_id);
+  void ProcessEntries(Int_t pad_id, std::function<void(Int_t)> selection);
+
+  void ProcessPadInfo(Int_t pad_id);
+  void ProcessPadNoise(Int_t pad_id);
+  void FitPadNoise(Int_t pad_id);
+  void ProcessPadSignal(Int_t pad_id);
+  void FitPadSignal(Int_t pad_id);
+
   //pad# and index of xmin,xmax,ymin,ymax values
-  int geom_map[npad+1][geom] = {
+  int geom_map[NUM_PADS+1][GEOM] = {
     {0,0,0,0},
     {3,4,2,3},//pad1
     {3,4,3,4},//pad2
