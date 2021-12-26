@@ -1,3 +1,9 @@
+#include <TLatex.h>
+#include <TString.h>
+#include <TH1D.h>
+#include <TStyle.h>
+#include <TCanvas.h>
+
 void CMSmark(TString plotTitle){
   TLatex l;
   l.SetTextFont(42);
@@ -10,7 +16,7 @@ void CMSmark(TString plotTitle){
   l.SetTextFont(42);
   l.DrawLatex(0.11,0.91,"#bf{CMS} #it{Preliminary}");
 }
-
+/*
 void SetPlotPar(TH1D* hist, TString xname, TString yname){
 
   hist->GetXaxis()->CenterTitle();
@@ -42,6 +48,7 @@ void Plot1D(TH1D* hist){
   can->Draw();
   can->cd();
   hist->Draw("");
- 
-
 }
+*/
+
+
