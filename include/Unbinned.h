@@ -3,6 +3,7 @@
 #include <vector>
 #include <functional>
 
+#include <TChain.h>
 #include <TFile.h>
 #include <TTree.h>
 #include <TBranch.h>
@@ -13,7 +14,9 @@
 #include <TMath.h>
 #include <TLegend.h>
 #include <TLatex.h>
-#include <TH2D.h>
+#include <TH1.h>
+#include <TH2.h>
+#include <TH3.h>
 #include <TStyle.h>
 #include <TColor.h>
 #include "TSystem.h"
@@ -33,7 +36,7 @@
 #include "RooBinning.h"
 #include "RooWorkspace.h"
 
-#include "testbeam.h"
+#include "SignalFit.h"
 
 #define NUM_CHANNEL 2
 #define NUM_PADS 16
@@ -63,6 +66,11 @@ class Unbinned{
   vector<Float_t> ycuts;
   vector<Float_t> frame_margins;
 
+  //Map plot parameters 
+  Int_t nbinsX = -999;
+  Int_t nbinsY = -999;
+  Int_t nbinsZ = -999;
+
   Float_t geom_cuts[NUM_PADS+1][GEOM];
 
   Float_t satCut;
@@ -75,6 +83,11 @@ class Unbinned{
   void SavePadInfo();
   void SavePadNoise();
   void SavePadSignal();
+
+  void ReduceTest(Float_t x1, Float_t x2, Float_t y1, Float_t y2);
+  void MakeMap();
+
+  std::pair<RooDataSet*,RooRealVar*> GetDataSet(Int_t pad_id, Float_t &mean);
 
  private:
 
@@ -101,6 +114,12 @@ class Unbinned{
   Float_t x_dut;
   Float_t y_dut;
 
+  //Subset of mip data for MPV map
+  vector<RooDataSet*> data_subset[NUM_PADS+1];
+
+  //3D Histogram vector
+  vector<TH3F*> h3;
+
   //Pad histograms
   vector<TH1F*> pad_amp;
   vector<TH1F*> pad_noise;
@@ -108,20 +127,16 @@ class Unbinned{
   vector<TH2F*> pad2D_all;
 
   //Roofit vectors
-  vector<RooRealVar*> amp_rrvar;
+  vector<RooRealVar*> amp_rrvar, x_rrvar, y_rrvar;
   vector<RooArgSet*> amp_argset;
   vector<RooDataSet*> noise_dataset;
   vector<RooDataSet*> mip_dataset;
-  vector<RooRealVar*> ml,sl,mg,sg;
-  vector<RooLandau*> landau;
-  vector<RooGaussian*> gauss;
-  vector<RooFFTConvPdf*> lxg;
-  vector<RooAddPdf*> pdf_lxg;
   vector<RooKeysPdf*> rkpdf;
-  vector<RooRealVar*> Nn,Ns;
   vector<RooPlot*> rplot;
   vector<RooWorkspace*> ws;
   vector<RooWorkspace*> wsIn;
+
+  vector<SignalFit*> sf;
 
   void InitBranches();
   void PrepareTree();
@@ -141,6 +156,10 @@ class Unbinned{
   void FitPadNoise(Int_t pad_id);
   void ProcessPadSignal(Int_t pad_id);
   void FitPadSignal(Int_t pad_id);
+
+  void CMSmark(TString plotTitle);
+
+  RooAbsData* ReduceDataSet(RooDataSet* data, Float_t x1, Float_t x2, Float_t y1, Float_t y2, Int_t pad_id);
 
   //pad# and index of xmin,xmax,ymin,ymax values
   int geom_map[NUM_PADS+1][GEOM] = {
